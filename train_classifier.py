@@ -9,8 +9,8 @@ from pathlib import Path
 import matplotlib.pyplot as plt
 
 # Configuration
+DATA_DIR = "data"  # Path to the root directory containing unsplit data
 SPLIT_DIR = "split_data"  # Directory to store split data
-PLOT_FILE = "training_plot.png"  # File to save the training plot
 BATCH_SIZE = 32
 NUM_CLASSES = 5  # Number of instrument categories
 TEST_SPLIT = 0.2  # Fraction of data to use for testing
@@ -32,26 +32,37 @@ test_dataset = datasets.ImageFolder(os.path.join(SPLIT_DIR, "test"), transform=t
 train_loader = DataLoader(train_dataset, batch_size=BATCH_SIZE, shuffle=True)
 test_loader = DataLoader(test_dataset, batch_size=BATCH_SIZE, shuffle=False)
 
-# Load pre-trained ResNet and modify it
-model = models.resnet18(pretrained=True)
-model.fc = nn.Sequential(
-    nn.Linear(model.fc.in_features, 256),
-    nn.ReLU(),
-    nn.Dropout(0.5),
-    nn.Linear(256, NUM_CLASSES)
-)
-model = model.to(DEVICE)
+# Define transfer learning function
+def create_model(model_name):
+    if model_name == "resnet18":
+        model = models.resnet18(pretrained=True)
+        model.fc = nn.Sequential(
+            nn.Linear(model.fc.in_features, 256),
+            nn.ReLU(),
+            nn.Dropout(0.5),
+            nn.Linear(256, NUM_CLASSES)
+        )
+    elif model_name == "efficientnet_b0":
+        model = models.efficientnet_b0(pretrained=True)
+        model.classifier = nn.Sequential(
+            nn.Linear(model.classifier[1].in_features, 256),
+            nn.ReLU(),
+            nn.Dropout(0.5),
+            nn.Linear(256, NUM_CLASSES)
+        )
+    elif model_name == "vgg16":
+        model = models.vgg16(pretrained=True)
+        model.classifier[-1] = nn.Linear(model.classifier[-1].in_features, NUM_CLASSES)
+    else:
+        raise ValueError(f"Unsupported model: {model_name}")
+    
+    return model.to(DEVICE)
 
-# Define loss and optimizer
-criterion = nn.CrossEntropyLoss()
-optimizer = optim.Adam(model.parameters(), lr=LEARNING_RATE)
-
-# Training loop
+# Training and evaluation functions
 def train_model(model, train_loader, test_loader, criterion, optimizer, epochs):
     train_losses, test_accuracies = [], []
 
     for epoch in range(epochs):
-        # Training phase
         model.train()
         running_loss = 0.0
         for inputs, labels in train_loader:
@@ -68,7 +79,6 @@ def train_model(model, train_loader, test_loader, criterion, optimizer, epochs):
         train_loss = running_loss / len(train_loader)
         train_losses.append(train_loss)
 
-        # Evaluation phase
         test_accuracy = evaluate_model(model, test_loader)
         test_accuracies.append(test_accuracy)
 
@@ -76,7 +86,6 @@ def train_model(model, train_loader, test_loader, criterion, optimizer, epochs):
     
     return train_losses, test_accuracies
 
-# Evaluation loop
 def evaluate_model(model, test_loader):
     model.eval()
     correct = 0
@@ -90,25 +99,38 @@ def evaluate_model(model, test_loader):
             correct += (predicted == labels).sum().item()
     return 100 * correct / total
 
-# Plot training loss and accuracy
-def plot_training_results(train_losses, test_accuracies, plot_file):
-    epochs = range(1, len(train_losses) + 1)
+def plot_results(results, metric, filename):
     plt.figure(figsize=(10, 6))
-    plt.plot(epochs, train_losses, label="Training Loss")
-    plt.plot(epochs, test_accuracies, label="Test Accuracy")
-    plt.title("Training Loss and Test Accuracy")
+    for model_name, values in results.items():
+        plt.plot(range(1, len(values) + 1), values, label=model_name)
+    plt.title(f"Comparison of {metric} Across Models")
     plt.xlabel("Epochs")
-    plt.ylabel("Value")
+    plt.ylabel(metric)
     plt.legend()
     plt.grid(True)
-    plt.savefig(plot_file)
-    plt.show()
+    plt.savefig(filename)
+    # plt.show()
 
-# Train and evaluate the model
-if __name__ == "__main__":
-    print("Starting training...")
+# Train and evaluate all models
+models_to_train = ["resnet18", "efficientnet_b0", "vgg16"]
+# models_to_train = ["vgg16"]
+all_train_losses = {}
+all_test_accuracies = {}
+
+for model_name in models_to_train:
+    print(f"\nTraining {model_name}...")
+    model = create_model(model_name)
+    criterion = nn.CrossEntropyLoss()
+    optimizer = optim.Adam(model.parameters(), lr=LEARNING_RATE)
+
     train_losses, test_accuracies = train_model(model, train_loader, test_loader, criterion, optimizer, EPOCHS)
-    print("Evaluating model...")
-    evaluate_model(model, test_loader)
-    print(f"Saving training plot to {PLOT_FILE}...")
-    plot_training_results(train_losses, test_accuracies, PLOT_FILE)
+    all_train_losses[model_name] = train_losses
+    all_test_accuracies[model_name] = test_accuracies
+
+    # Plot individual results
+    plot_results({model_name: train_losses}, "Training Loss", f"{model_name}_loss.png")
+    plot_results({model_name: test_accuracies}, "Test Accuracy", f"{model_name}_accuracy.png")
+
+# Plot combined results
+plot_results(all_train_losses, "Training Loss", "combined_loss.png")
+plot_results(all_test_accuracies, "Test Accuracy", "combined_accuracy.png")
