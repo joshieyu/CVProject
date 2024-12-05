@@ -1,5 +1,4 @@
 import os
-import shutil
 import torch
 from torch import nn, optim
 from torchvision import models, datasets, transforms
@@ -11,6 +10,7 @@ import matplotlib.pyplot as plt
 # Configuration
 DATA_DIR = "data"  # Path to the root directory containing unsplit data
 SPLIT_DIR = "split_data"  # Directory to store split data
+MODEL_SAVE_DIR = "saved_models"  # Directory to save trained models
 BATCH_SIZE = 32
 NUM_CLASSES = 5  # Number of instrument categories
 TEST_SPLIT = 0.2  # Fraction of data to use for testing
@@ -126,6 +126,11 @@ for model_name in models_to_train:
     train_losses, test_accuracies = train_model(model, train_loader, test_loader, criterion, optimizer, EPOCHS)
     all_train_losses[model_name] = train_losses
     all_test_accuracies[model_name] = test_accuracies
+
+    # Save the trained model
+    model_save_path = os.path.join(MODEL_SAVE_DIR, f"{model_name}_model.pth")
+    torch.save(model.state_dict(), model_save_path)
+    print(f"Model saved to {model_save_path}")
 
     # Plot individual results
     plot_results({model_name: train_losses}, "Training Loss", f"{model_name}_loss.png")
