@@ -2,12 +2,12 @@ Classification Report for efficientnet_b0:
 
               precision    recall  f1-score   support
 
-    acoustic     0.8500    0.9189    0.8831        37
+    acoustic     0.8919    0.8919    0.8919        37
         bass     0.9000    0.9000    0.9000        20
-    electric     0.9318    0.9318    0.9318        44
-        lead     0.7895    0.7500    0.7692        20
-         pad     0.9474    0.8571    0.9000        21
+    electric     0.8511    0.9091    0.8791        44
+        lead     0.7778    0.7000    0.7368        20
+         pad     0.9000    0.8571    0.8780        21
 
-    accuracy                         0.8873       142
-   macro avg     0.8837    0.8716    0.8768       142
-weighted avg     0.8883    0.8873    0.8870       142
+    accuracy                         0.8662       142
+   macro avg     0.8641    0.8516    0.8572       142
+weighted avg     0.8655    0.8662    0.8652       142

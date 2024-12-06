@@ -27,7 +27,7 @@ os.makedirs(REPORTS_SAVE_DIR, exist_ok=True)
 
 # Define transforms
 transform = transforms.Compose([
-    transforms.Resize((224, 224)),  # ResNet input size
+    transforms.Resize((224, 224)),  # Transform input size for all three models
     transforms.ToTensor(),
     transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])  # ImageNet normalization
 ])
@@ -44,7 +44,7 @@ class_names = train_dataset.classes
 
 # Define transfer learning function
 def create_model(model_name):
-    if model_name == "resnet18":
+    if model_name == "resnet18": # Transfer learning using ResNet-18
         model = models.resnet18(pretrained=True)
         model.fc = nn.Sequential(
             nn.Linear(model.fc.in_features, 256),
@@ -52,7 +52,7 @@ def create_model(model_name):
             nn.Dropout(0.5),
             nn.Linear(256, NUM_CLASSES)
         )
-    elif model_name == "efficientnet_b0":
+    elif model_name == "efficientnet_b0": # Transfer learning using EfficientNet-B0
         model = models.efficientnet_b0(pretrained=True)
         model.classifier = nn.Sequential(
             nn.Linear(model.classifier[1].in_features, 256),
@@ -60,7 +60,7 @@ def create_model(model_name):
             nn.Dropout(0.5),
             nn.Linear(256, NUM_CLASSES)
         )
-    elif model_name == "vgg16":
+    elif model_name == "vgg16": # Transfer learning using VGG-16
         model = models.vgg16(pretrained=True)
         model.classifier[-1] = nn.Linear(model.classifier[-1].in_features, NUM_CLASSES)
     else:
@@ -72,30 +72,31 @@ def create_model(model_name):
 def train_model(model, train_loader, test_loader, criterion, optimizer, epochs):
     train_losses, test_accuracies = [], []
 
-    for epoch in range(epochs):
+    for epoch in range(epochs): # Iterate over epochs
         model.train()
         running_loss = 0.0
         for inputs, labels in train_loader:
             inputs, labels = inputs.to(DEVICE), labels.to(DEVICE)
             
-            optimizer.zero_grad()
-            outputs = model(inputs)
-            loss = criterion(outputs, labels)
-            loss.backward()
-            optimizer.step()
+            optimizer.zero_grad() # Zero the parameter gradients
+            outputs = model(inputs) # Forward pass
+            loss = criterion(outputs, labels) # Compute the loss
+            loss.backward() # Backward pass
+            optimizer.step() # Optimize the model
             
-            running_loss += loss.item()
+            running_loss += loss.item() 
         
-        train_loss = running_loss / len(train_loader)
+        train_loss = running_loss / len(train_loader) # Calculate loss over the entire training set
         train_losses.append(train_loss)
 
-        test_accuracy = evaluate_model(model, test_loader)
+        test_accuracy = evaluate_model(model, test_loader) # Evaluate the model on the test set
         test_accuracies.append(test_accuracy)
 
         print(f"Epoch {epoch + 1}/{epochs}, Loss: {train_loss:.4f}, Accuracy: {test_accuracy:.2f}%")
     
     return train_losses, test_accuracies
 
+# Function to evaluate model performance on the test set
 def evaluate_model(model, test_loader):
     model.eval()
     correct = 0
@@ -109,6 +110,7 @@ def evaluate_model(model, test_loader):
             correct += (predicted == labels).sum().item()
     return 100 * correct / total
 
+# Function to plot training loss and test accuracy
 def plot_results(results, metric, filename):
     plt.figure(figsize=(10, 6))
     for model_name, values in results.items():
@@ -122,6 +124,7 @@ def plot_results(results, metric, filename):
     plt.close()  # Close the figure to free memory
     # plt.show()
 
+# Function to evaluate detailed metrics such as classification report and confusion matrix
 def evaluate_detailed_metrics(model, test_loader, class_names, model_name):
     """
     Computes and saves the classification report and confusion matrix for the given model.
@@ -164,11 +167,12 @@ models_to_train = ["resnet18", "efficientnet_b0", "vgg16"]
 all_train_losses = {}
 all_test_accuracies = {}
 
+# Iterate over each model
 for model_name in models_to_train:
     print(f"\nTraining {model_name}...")
-    model = create_model(model_name)
-    criterion = nn.CrossEntropyLoss()
-    optimizer = optim.Adam(model.parameters(), lr=LEARNING_RATE)
+    model = create_model(model_name) # Initialize the model
+    criterion = nn.CrossEntropyLoss() # Set the loss function to cross-entropy
+    optimizer = optim.Adam(model.parameters(), lr=LEARNING_RATE) # Set the optimizer to Adam
 
     train_losses, test_accuracies = train_model(model, train_loader, test_loader, criterion, optimizer, EPOCHS)
     all_train_losses[model_name] = train_losses

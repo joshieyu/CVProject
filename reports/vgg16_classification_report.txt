@@ -1,0 +1,13 @@
+Classification Report for vgg16:
+
+              precision    recall  f1-score   support
+
+    acoustic     0.9429    0.8919    0.9167        37
+        bass     0.8696    1.0000    0.9302        20
+    electric     0.9524    0.9091    0.9302        44
+        lead     0.7500    0.9000    0.8182        20
+         pad     1.0000    0.8571    0.9231        21
+
+    accuracy                         0.9085       142
+   macro avg     0.9030    0.9116    0.9037       142
+weighted avg     0.9168    0.9085    0.9099       142
