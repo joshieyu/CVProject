@@ -11,6 +11,12 @@ shutil
 librosa
 numpy
 
+All the code, dataset, and weight files can be found at this Github Repository:
+
+https://github.com/joshieyu/CVProject
+
+The only exception is the VGG16 model weight file. It is too big to be hosted on Github. Please contact the students if that specific weight file is needed.
+
 Three scripts are provided.
 
 convertToMelSpectrogram.py is a utility script to convert audio (16 kHz, mono) to 
