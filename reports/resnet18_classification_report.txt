@@ -1,0 +1,13 @@
+Classification Report for resnet18:
+
+              precision    recall  f1-score   support
+
+    acoustic     0.9722    0.9459    0.9589        37
+        bass     0.9048    0.9500    0.9268        20
+    electric     0.8696    0.9091    0.8889        44
+        lead     0.7500    0.6000    0.6667        20
+         pad     0.8261    0.9048    0.8636        21
+
+    accuracy                         0.8803       142
+   macro avg     0.8645    0.8620    0.8610       142
+weighted avg     0.8780    0.8803    0.8774       142
