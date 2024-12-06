@@ -1,6 +1,8 @@
 import os
 print("Full path being accessed:", os.path.abspath("./resampledAudioData"))
 
+if not os.access("./resampledAudioData", os.R_OK):
+    print(f"Cannot read the directory: {input_directory}")
 import librosa
 import librosa.display
 import matplotlib.pyplot as plt
